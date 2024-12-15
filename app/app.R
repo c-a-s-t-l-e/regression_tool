@@ -4,21 +4,8 @@ library(dplyr)
 library(ggplot2)
 library(DT)
 
-# Create a custom theme
-my_theme <- bs_theme(
-  version = 5,
-  bootswatch = "superhero",
-  primary = "#4B0082",  # Deep purple
-  "card-bg" = "#1E2A3B",
-  "body-bg" = "#0F1723",
-  "body-color" = "#E0E0E0"
-) |>
-  bs_add_rules(sass::sass_file("custom.scss"))
-
 ui <- page_fluid(
-  theme = my_theme,
   card(
-    class = "shadow-lg",
     card_header(
       h2("Regression Diagnostics Tool", class = "text-center")
     ),
@@ -31,10 +18,9 @@ ui <- page_fluid(
                      value = 4, min = 0, step = 0.1),
         numericInput("leverage_multiplier", "Leverage Threshold Multiplier", 
                      value = 2, min = 0, step = 0.1),
-        actionButton("reset", "Reset Data", class = "btn-warning w-100")
+        actionButton("reset", "Reset Data")
       ),
       card(
-        class = "shadow",
         card_header(
           h3("Regression Analysis", class = "text-center")
         ),
@@ -59,7 +45,6 @@ ui <- page_fluid(
 )
 
 server <- function(input, output, session) {
-  # [Rest of the server code remains exactly the same]
   rv <- reactiveValues(
     data = NULL,
     removed_points = NULL
@@ -123,23 +108,10 @@ server <- function(input, output, session) {
     
     ggplot(reg_data$diagnostic_df, aes(x = x, y = y)) +
       geom_point(aes(color = influential), size = 3, alpha = 0.7) +
-      geom_smooth(method = "lm", se = TRUE, color = "#00BCD4") +
+      geom_smooth(method = "lm", se = TRUE) +
       labs(x = input$x_var, y = input$y_var, 
            title = "Regression Plot with Influential Points Highlighted") +
-      scale_color_manual(values = c("FALSE" = "#7B8FA1", "TRUE" = "#FF5252")) +
-      theme_minimal() +
-      theme(
-        plot.background = element_rect(fill = "#1E2A3B", color = NA),
-        panel.background = element_rect(fill = "#1E2A3B", color = NA),
-        panel.grid.major = element_line(color = "#2C3E50"),
-        panel.grid.minor = element_line(color = "#2C3E50"),
-        text = element_text(color = "#E0E0E0"),
-        axis.text = element_text(color = "#E0E0E0"),
-        title = element_text(color = "#E0E0E0"),
-        legend.background = element_rect(fill = "#1E2A3B"),
-        legend.text = element_text(color = "#E0E0E0"),
-        legend.key = element_rect(fill = "#1E2A3B")
-      )
+      scale_color_manual(values = c("FALSE" = "gray", "TRUE" = "red"))
   })
   
   output$diagnosticPlots <- renderPlot({
@@ -147,21 +119,19 @@ server <- function(input, output, session) {
     
     reg_data <- regression_data()
     
-    par(mfrow = c(1, 2), bg = "#1E2A3B", col.axis = "#E0E0E0", col.lab = "#E0E0E0", col.main = "#E0E0E0")
+    par(mfrow = c(1, 2))
     
     plot(reg_data$diagnostic_df$cooks_d, type = "h",
          main = "Cook's Distance",
          ylab = "Cook's Distance",
-         xlab = "Observation Number",
-         col = "#00BCD4")
-    abline(h = reg_data$cooks_threshold, col = "#FF5252", lty = 2)
+         xlab = "Observation Number")
+    abline(h = reg_data$cooks_threshold, col = "red", lty = 2)
     
     plot(reg_data$diagnostic_df$leverage, type = "h",
          main = "Leverage",
          ylab = "Leverage",
-         xlab = "Observation Number",
-         col = "#00BCD4")
-    abline(h = reg_data$leverage_threshold, col = "#FF5252", lty = 2)
+         xlab = "Observation Number")
+    abline(h = reg_data$leverage_threshold, col = "red", lty = 2)
   })
   
   output$influentialPoints <- renderDT({
@@ -175,15 +145,7 @@ server <- function(input, output, session) {
         select(row, x, y, cooks_d, leverage, studentized_residuals) |>
         round(4)
     }
-  }, options = list(
-    pageLength = 5,
-    dom = 'Bfrtip',
-    initComplete = JS(
-      "function(settings, json) {",
-      "$(this.api().table().container()).css({'background-color': '#1E2A3B', 'color': '#E0E0E0'});",
-      "}"
-    )
-  ))
+  })
   
   output$rcode <- renderText({
     req(input$x_var, input$y_var)
