@@ -131,11 +131,14 @@ server <- function(input, output, session) {
       theme(
         plot.background = element_rect(fill = "#1E2A3B", color = NA),
         panel.background = element_rect(fill = "#1E2A3B", color = NA),
+        panel.grid.major = element_line(color = "#2C3E50"),
+        panel.grid.minor = element_line(color = "#2C3E50"),
         text = element_text(color = "#E0E0E0"),
         axis.text = element_text(color = "#E0E0E0"),
         title = element_text(color = "#E0E0E0"),
         legend.background = element_rect(fill = "#1E2A3B"),
-        legend.text = element_text(color = "#E0E0E0")
+        legend.text = element_text(color = "#E0E0E0"),
+        legend.key = element_rect(fill = "#1E2A3B")
       )
   })
   
