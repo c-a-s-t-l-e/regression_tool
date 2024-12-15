@@ -17,8 +17,7 @@ ui <- page_fluid(
         numericInput("cooks_multiplier", "Cook's Distance Threshold Multiplier", 
                      value = 4, min = 0, step = 0.1),
         numericInput("leverage_multiplier", "Leverage Threshold Multiplier", 
-                     value = 2, min = 0, step = 0.1),
-        actionButton("reset", "Reset Data")
+                     value = 2, min = 0, step = 0.1)
       ),
       card(
         card_header(
@@ -55,12 +54,6 @@ server <- function(input, output, session) {
     rv$removed_points <- NULL
     updateSelectInput(session, "x_var", choices = names(rv$data))
     updateSelectInput(session, "y_var", choices = names(rv$data))
-  })
-  
-  observeEvent(input$reset, {
-    if (!is.null(rv$data)) {
-      rv$removed_points <- NULL
-    }
   })
   
   regression_data <- reactive({
@@ -106,9 +99,17 @@ server <- function(input, output, session) {
     
     reg_data <- regression_data()
     
+    # Get model predictions for the line
+    pred_data <- data.frame(
+      x = seq(min(reg_data$diagnostic_df$x), max(reg_data$diagnostic_df$x), length.out = 100)
+    )
+    names(pred_data) <- input$x_var
+    pred_data$pred <- predict(reg_data$model, newdata = pred_data)
+    
     ggplot(reg_data$diagnostic_df, aes(x = x, y = y)) +
       geom_point(aes(color = influential), size = 3, alpha = 0.7) +
-      geom_smooth(method = "lm", se = TRUE) +
+      geom_line(data = pred_data, aes(x = .data[[input$x_var]], y = pred), 
+                color = "blue", linewidth = 1) +
       labs(x = input$x_var, y = input$y_var, 
            title = "Regression Plot with Influential Points Highlighted") +
       scale_color_manual(values = c("FALSE" = "gray", "TRUE" = "red"))
